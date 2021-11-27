@@ -20,14 +20,14 @@ class DialogManagerImpl implements DialogManager {
 
     private final Map<String, DialogTask> mTaskMap = new HashMap<>();
 
-    // 拓扑排序结果, 弹出顺序即为排序结果顺序
-    private final Stack<String> mSeq = new Stack<>();
-
     private boolean mStarted = false;
     private boolean mStopped = false;
 
-    // 无序的有向图
-    private final Map<String, TaskNode> mNodeMap = new HashMap<>();
+    // 有向图的邻接列表
+    private final Map<String, TaskNode> mNodeGraph = new HashMap<>();
+
+    // 拓扑排序结果, 弹出顺序即为排序结果顺序
+    private final Stack<String> mSeq = new Stack<>();
 
     private DialogChainListener mChainListener;
 
@@ -65,10 +65,10 @@ class DialogManagerImpl implements DialogManager {
     }
 
     private TaskNode getNode(String name) {
-        TaskNode node = mNodeMap.get(name);
+        TaskNode node = mNodeGraph.get(name);
         if (node == null) {
             node = TaskNode.create(name);
-            mNodeMap.put(name, node);
+            mNodeGraph.put(name, node);
         }
         return node;
     }
@@ -148,7 +148,7 @@ class DialogManagerImpl implements DialogManager {
             mChainListener.onChainStarted();
         }
 
-        collectNodes();
+        configServices();
 
         orderTasks();
 
@@ -179,11 +179,11 @@ class DialogManagerImpl implements DialogManager {
         }
     }
 
-    private void collectNodes() {
+    private void configServices() {
         // 使用 spi 获取所有的 task service, 并配置
         ServiceLoader<DialogTaskService> loader = ServiceLoader.load(DialogTaskService.class);
-        for (DialogTaskService node : loader) {
-            node.config(mTaskManager);
+        for (DialogTaskService service : loader) {
+            service.config(mTaskManager);
         }
     }
 
@@ -192,11 +192,11 @@ class DialogManagerImpl implements DialogManager {
         Set<String> using = new HashSet<>(); // 标记是否正在被使用
         boolean noEmptyInNode = true; // 没有入度为 0 的点, 则必有环
 
-        for (String name : mNodeMap.keySet()) {
+        for (String name : mNodeGraph.keySet()) {
             if (mSeq.contains(name)) { // 已经放入序列, 跳过
                 continue;
             }
-            TaskNode node = mNodeMap.get(name);
+            TaskNode node = mNodeGraph.get(name);
             if (node == null) {
                 continue;
             }

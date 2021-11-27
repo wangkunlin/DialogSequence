@@ -8,4 +8,5 @@ public interface DialogTypes {
     String DIALOG_B = "dialogB";
     String DIALOG_C = "dialogC";
     String DIALOG_D = "dialogD";
+    String DIALOG_E = "dialogE";
 }
