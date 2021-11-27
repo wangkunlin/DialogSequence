@@ -150,7 +150,7 @@ class DialogManagerImpl implements DialogManager {
 
         configServices();
 
-        orderTasks();
+        orderTasks(false);
 
         runNextTask();
     }
@@ -188,7 +188,7 @@ class DialogManagerImpl implements DialogManager {
     }
 
     // 拓扑排序
-    private void orderTasks() {
+    private void orderTasks(boolean checkCycle) {
         Set<String> using = new HashSet<>(); // 标记是否正在被使用
         boolean noEmptyInNode = true; // 没有入度为 0 的点, 则必有环
 
@@ -200,34 +200,45 @@ class DialogManagerImpl implements DialogManager {
             if (node == null) {
                 continue;
             }
-            if (node.isEmptyIn()) {
+            if (checkCycle || node.isEmptyIn()) {
                 noEmptyInNode = false;
                 dfs(node, using);
             }
         }
-        if (noEmptyInNode) {
-            throw new IllegalStateException("Cycle detected");
+        if (!checkCycle && noEmptyInNode) { // 没有找到入度为 0 的点，则开始检查环
+            orderTasks(true);
         }
     }
 
     // 深度优先遍历
-    private void dfs(TaskNode node, Set<String> using) {
+    private List<String> dfs(TaskNode node, Set<String> using) {
         String name = node.name;
         if (mSeq.contains(name)) {
-            return;
+            return null;
         }
         if (using.contains(name)) { // 当前节点 已经被加入过, 则代表有环
-            throw new RuntimeException("Cycle detected at: " + name);
+            List<String> cycleList = new ArrayList<>();
+            cycleList.add(name);
+            return cycleList;
         }
         using.add(name);
         List<TaskNode> nodes = node.outNodes;
         if (nodes != null) {
             for (TaskNode outNode : nodes) {
-                dfs(outNode, using);
+                List<String> cycleList = dfs(outNode, using);
+                if (cycleList != null) { // Cycle detected
+                    String cycleNode = cycleList.get(cycleList.size() - 1);
+                    cycleList.add(0, name);
+                    if (name.equals(cycleNode)) { // cycle
+                        throw new RuntimeException("Cycle detected: " + Util.join(" -> ", cycleList));
+                    }
+                    return cycleList;
+                }
             }
         }
         using.remove(name);
         mSeq.push(name); // 遍历完成，放入序列栈中
+        return null;
     }
 
     @Override
