@@ -16,7 +16,7 @@ public abstract class DialogTask {
     private boolean mDestroyed = false;
     private boolean mSkipped = false;
 
-    final void callCreante() {
+    final void callCreate() {
         if (mCreated) {
             return;
         }
