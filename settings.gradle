@@ -1,2 +1,6 @@
 rootProject.name = "DialogSequence"
 include ':app'
+include ':dialog-sequence'
+include ':test-a'
+include ':base'
+include ':test-b'

@@ -6,8 +6,8 @@ import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.dialogsequence.dag.DialogChainListener;
-import com.example.dialogsequence.dag.DialogManager;
+import com.dag.dialog.sequence.DialogChainListener;
+import com.dag.dialog.sequence.DialogChainManager;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                DialogManager dialogManager = DialogManager.newInstance(MainActivity.this);
+                DialogChainManager dialogManager = DialogChainManager.newInstance(MainActivity.this);
                 dialogManager.setChainListener(mChainListener);
                 dialogManager.start();
             }
