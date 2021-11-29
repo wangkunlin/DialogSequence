@@ -1,6 +1,9 @@
 package com.dag.dialog.sequence;
 
 import android.app.Activity;
+import android.text.TextUtils;
+
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,6 +20,8 @@ import java.util.Stack;
 class DialogChainManagerImpl implements DialogChainManager {
 
     private final Activity mActivity;
+    @Nullable
+    private final String mTag;
 
     private final Map<String, DialogTask> mTaskMap = new HashMap<>();
 
@@ -135,8 +140,13 @@ class DialogChainManagerImpl implements DialogChainManager {
         }
     };
 
-    DialogChainManagerImpl(Activity activity) {
+    DialogChainManagerImpl(Activity activity, @Nullable String tagName) {
         mActivity = activity;
+        if (tagName == null) {
+            mTag = "";
+        } else {
+            mTag = tagName.trim();
+        }
     }
 
     final Activity getActivity() {
@@ -193,7 +203,13 @@ class DialogChainManagerImpl implements DialogChainManager {
         // 使用 spi 获取所有的 task service, 并配置
         ServiceLoader<DialogTaskService> loader = ServiceLoader.load(DialogTaskService.class);
         for (DialogTaskService service : loader) {
-            service.config(mTaskManager);
+            String tag = service.getTagName();
+            if (tag == null) {
+                tag = "";
+            }
+            if (TextUtils.equals(tag.trim(), mTag)) {
+                service.config(mTaskManager);
+            }
         }
     }
 
@@ -221,6 +237,7 @@ class DialogChainManagerImpl implements DialogChainManager {
     }
 
     // 深度优先遍历
+    @Nullable
     private List<String> dfs(TaskNode node, Set<String> using) {
         String name = node.name;
         if (mSeq.contains(name)) {

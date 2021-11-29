@@ -1,5 +1,7 @@
 package com.example.base;
 
+import androidx.annotation.Nullable;
+
 import com.dag.dialog.sequence.DialogTaskService;
 import com.dag.dialog.sequence.TaskManager;
 
@@ -7,6 +9,12 @@ import com.dag.dialog.sequence.TaskManager;
  * On 2021-11-26
  */
 public class ConfigDialogTaskService implements DialogTaskService {
+
+    @Nullable
+    @Override
+    public String getTagName() {
+        return null;
+    }
 
     // 这里为了方便统一管理依赖关系, 而单独使用一个 service
     @Override
