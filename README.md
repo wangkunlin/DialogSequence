@@ -12,6 +12,6 @@ allprojects {
 
 ```gradle
 dependencies {
-    compile 'com.github.wangkunlin:dialog-chain:1.0.0'
+    implementation 'com.github.wangkunlin:DialogSequence:1.0.0'
 }
 ```
