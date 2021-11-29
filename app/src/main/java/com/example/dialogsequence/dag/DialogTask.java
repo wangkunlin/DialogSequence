@@ -43,13 +43,8 @@ public abstract class DialogTask {
         return mDialogManager.getActivity();
     }
 
-    public final void dependsOn(String... names) {
-        for (String name : names) {
-            if (name == null) {
-                throw new NullPointerException();
-            }
-            mDialogManager.nodeRelation(mName, name);
-        }
+    public final void dependsOn(String... dependencies) {
+        mDialogManager.taskDependsOn(mName, dependencies);
     }
 
     final void callShowDialog() {
@@ -57,7 +52,7 @@ public abstract class DialogTask {
             notifyDialogDismissed();
             return;
         }
-        if (mShown) {
+        if (mShown || mDestroyed) {
             return;
         }
         mShown = true;

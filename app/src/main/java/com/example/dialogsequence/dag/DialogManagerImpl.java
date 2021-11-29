@@ -34,7 +34,7 @@ class DialogManagerImpl implements DialogManager {
     private static class TaskNode {
         private final String name; // 节点名
         private int inCount = 0; // 入度
-        private List<TaskNode> outNodes; // 可到达的节点
+        private List<TaskNode> toNodes; // 可到达的节点
 
         private TaskNode(String name) {
             this.name = name;
@@ -48,15 +48,19 @@ class DialogManagerImpl implements DialogManager {
             return inCount == 0;
         }
 
-        private boolean addOutNode(TaskNode node) {
-            if (outNodes == null) {
-                outNodes = new ArrayList<>();
+        private void to(TaskNode toNode) {
+            TaskNode fromNode = this;
+            if (fromNode == toNode) { // 自己不能依赖自己
+                return;
             }
-            if (outNodes.contains(node)) {
-                return false;
+            if (toNodes == null) {
+                toNodes = new ArrayList<>();
             }
-            outNodes.add(node);
-            return true;
+            if (toNodes.contains(toNode)) {
+                return;
+            }
+            toNodes.add(toNode);
+            toNode.increaseCount(); // 入度 +1
         }
 
         private static TaskNode create(String name) {
@@ -73,15 +77,22 @@ class DialogManagerImpl implements DialogManager {
         return node;
     }
 
-    // in 依赖于 out, out ----> in
-    final void nodeRelation(String in, String out) {
-        TaskNode inNode = getNode(in);
-        TaskNode outNode = getNode(out);
-        if (inNode == outNode) { // 自己不能依赖自己
-            return;
+    // to 依赖于 from, from ----> to
+    private void nodeRelation(String to, String from) {
+        TaskNode toNode = getNode(to);
+        TaskNode fromNode = getNode(from);
+        fromNode.to(toNode);
+    }
+
+    final void taskDependsOn(String to, String... fromNames) {
+        if (to == null) {
+            throw new NullPointerException();
         }
-        if (outNode.addOutNode(inNode)) {
-            inNode.increaseCount(); // 入度 +1
+        for (String from : fromNames) {
+            if (from == null) {
+                throw new NullPointerException();
+            }
+            nodeRelation(to, from);
         }
     }
 
@@ -95,9 +106,13 @@ class DialogManagerImpl implements DialogManager {
         @SuppressWarnings("unchecked")
         @Override
         public <T extends DialogTask> T create(String name, Class<? extends T> type) {
+            if (name == null) {
+                throw new NullPointerException("name == null");
+            }
             DialogTask task = mTaskMap.get(name);
             if (task != null) {
-                throw new RuntimeException("already has a task named: " + name);
+                throw new RuntimeException("already has a task named: " + name +
+                        " class: " + task.getClass().getName());
             }
 
             try {
@@ -115,13 +130,8 @@ class DialogManagerImpl implements DialogManager {
         }
 
         @Override
-        public void dependsOn(String in, String... outs) {
-            for (String out : outs) {
-                if (out == null) {
-                    throw new NullPointerException();
-                }
-                nodeRelation(in, out);
-            }
+        public void dependsOn(String name, String... dependencies) {
+            taskDependsOn(name, dependencies);
         }
     };
 
@@ -222,7 +232,7 @@ class DialogManagerImpl implements DialogManager {
             return cycleList;
         }
         using.add(name);
-        List<TaskNode> nodes = node.outNodes;
+        List<TaskNode> nodes = node.toNodes;
         if (nodes != null) {
             for (TaskNode outNode : nodes) {
                 List<String> cycleList = dfs(outNode, using);

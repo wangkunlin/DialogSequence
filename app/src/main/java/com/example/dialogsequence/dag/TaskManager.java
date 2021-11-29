@@ -11,6 +11,6 @@ public interface TaskManager {
 
     <T extends DialogTask> T create(String name, Class<? extends T> type);
 
-    void dependsOn(String target, String... dependency);
+    void dependsOn(String target, String... dependencies);
 
 }
